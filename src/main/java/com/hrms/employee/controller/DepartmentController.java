@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ public class DepartmentController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'HR')")
 	public ResponseEntity<DepartmentResponseDTO> createDepartment(@Valid @RequestBody DepartmentRequestDTO dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(departmentService.createDepartment(dto));
 	}
@@ -45,12 +47,14 @@ public class DepartmentController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'HR')")
 	public ResponseEntity<DepartmentResponseDTO> updateDepartment(@PathVariable Long id,
 			@Valid @RequestBody DepartmentRequestDTO dto) {
 		return ResponseEntity.ok(departmentService.updateDepartment(id, dto));
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'HR')")
 	public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
 		departmentService.deleteDepartment(id);
 		return ResponseEntity.noContent().build();

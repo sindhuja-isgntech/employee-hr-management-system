@@ -3,6 +3,7 @@ package com.hrms.employee.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class EmployeeController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'HR')")
 	public ResponseEntity<EmployeeResponseDTO> createEmployee(@Valid @RequestBody EmployeeRequestDTO dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(dto));
 	}
@@ -66,6 +68,7 @@ public class EmployeeController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
 		employeeService.deleteEmployee(id);
 		return ResponseEntity.noContent().build();
