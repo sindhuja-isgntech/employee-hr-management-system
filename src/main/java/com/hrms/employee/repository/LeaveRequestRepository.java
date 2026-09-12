@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.hrms.employee.entity.LeaveRequest;
+import com.hrms.employee.enums.LeaveStatus;
 
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long>{
 	
@@ -19,5 +20,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     boolean hasOverlappingLeave(@Param("employeeId") Long employeeId,
                                 @Param("startDate") LocalDate startDate,
                                 @Param("endDate") LocalDate endDate);
+    
+    // Add these methods to LeaveRequestRepository.java
+    long countByStatus(LeaveStatus status);
+
+    @Query("SELECT COUNT(l) FROM LeaveRequest l WHERE l.status = 'APPROVED' " +
+           "AND :today BETWEEN l.startDate AND l.endDate")
+    long countEmployeesOnLeave(@Param("today") LocalDate today);
 
 }

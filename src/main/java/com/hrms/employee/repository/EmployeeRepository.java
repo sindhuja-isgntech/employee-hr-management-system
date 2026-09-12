@@ -33,5 +33,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>{
 			Pageable pageable);
 
 	List<Employee> findByDepartmentId(Long departmentId);
+	
+	long countByStatus(Status status);
 
 }
