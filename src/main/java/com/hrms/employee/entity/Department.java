@@ -31,10 +31,12 @@ public class Department {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Status status = Status.ACTIVE;
 
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = false)
     @ToString.Exclude
+    @Builder.Default
     private List<Employee> employees = new ArrayList<>();
 
     @CreationTimestamp

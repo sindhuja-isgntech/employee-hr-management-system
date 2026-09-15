@@ -19,6 +19,9 @@ import com.hrms.employee.exception.ResourceNotFoundException;
 import com.hrms.employee.repository.DepartmentRepository;
 import com.hrms.employee.repository.EmployeeRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class EmployeeService {
 	
@@ -54,7 +57,10 @@ public class EmployeeService {
                 .department(department)
                 .build();
 
-        return mapToDTO(employeeRepository.save(employee));
+        //return mapToDTO(employeeRepository.save(employee));
+        EmployeeResponseDTO result = mapToDTO(employeeRepository.save(employee));
+        log.info("Employee created successfully: employeeId={}", result.getId());
+        return result;
     }
 
     public Page<EmployeeResponseDTO> getEmployees(String search, Long departmentId, Status status, int page, int size, String sortBy, String sortDir) {

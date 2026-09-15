@@ -42,6 +42,7 @@ public class LeaveRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private LeaveStatus status = LeaveStatus.PENDING;
 
     private String rejectionReason;

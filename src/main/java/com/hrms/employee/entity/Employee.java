@@ -48,6 +48,7 @@ public class Employee {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Status status = Status.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)

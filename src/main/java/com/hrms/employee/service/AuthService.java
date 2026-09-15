@@ -9,6 +9,7 @@ import com.hrms.employee.exception.ResourceNotFoundException;
 import com.hrms.employee.repository.*;
 import com.hrms.employee.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -40,8 +41,11 @@ public class AuthService {
     private final JwtUtils jwtUtils;
 
     public JwtResponseDTO authenticateUser(LoginRequestDTO loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
+        
+    	try {
+    	Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+    	log.info("User login successful for email: {}", loginRequest.getEmail());
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
@@ -54,6 +58,10 @@ public class AuthService {
                 .collect(Collectors.toSet());
 
         return new JwtResponseDTO(jwt, userDetails.getUsername(), roles);
+    	}catch (BadCredentialsException e) {
+            log.warn("Failed login attempt for email: {}", loginRequest.getEmail());
+            throw e;
+        }
     }
 
     public String registerUser(RegisterRequestDTO registerRequest) {
