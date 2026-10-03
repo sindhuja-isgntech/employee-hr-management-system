@@ -26,13 +26,14 @@ public class AttendanceService {
 	private final AttendanceRepository attendanceRepository;
     private final EmployeeRepository employeeRepository;
 
-    public AttendanceResponseDTO checkIn(CheckInRequestDTO dto) {
+    public AttendanceResponseDTO checkInForUser(String email) {
         LocalDate today = LocalDate.now();
 
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + dto.getEmployeeId()));
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No employee profile is linked to this account."));
+        Long employeeId = employee.getId();
 
-        if (attendanceRepository.existsByEmployeeIdAndAttendanceDate(dto.getEmployeeId(), today)) {
+        if (attendanceRepository.existsByEmployeeIdAndAttendanceDate(employeeId, today)) {
             throw new InvalidOperationException("Employee has already checked in for today.");
         }
 
@@ -46,10 +47,12 @@ public class AttendanceService {
         return mapToDTO(attendanceRepository.save(attendance));
     }
 
-    public AttendanceResponseDTO checkOut(CheckOutRequestDTO dto) {
+    public AttendanceResponseDTO checkOutForUser(String email) {
         LocalDate today = LocalDate.now();
 
-        Attendance attendance = attendanceRepository.findByEmployeeIdAndAttendanceDate(dto.getEmployeeId(), today)
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No employee profile is linked to this account."));
+        Attendance attendance = attendanceRepository.findByEmployeeIdAndAttendanceDate(employee.getId(), today)
                 .orElseThrow(() -> new InvalidOperationException("Cannot check out. No check-in record found for today."));
 
         if (attendance.getCheckOut() != null) {
@@ -78,6 +81,13 @@ public class AttendanceService {
         return attendanceRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<AttendanceResponseDTO> getMyAttendanceForUser(String email) {
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new com.hrms.employee.exception.ResourceNotFoundException(
+                        "No employee profile is linked to this account."));
+        return getMyAttendance(employee.getId());
     }
 
     public List<AttendanceResponseDTO> getAllAttendance(LocalDate date) {

@@ -12,9 +12,6 @@ import lombok.Data;
 @Data
 public class LeaveRequestDTO {
 	
-	@NotNull(message = "Employee ID is required")
-    private Long employeeId;
-
     @NotNull(message = "Leave type is required")
     private LeaveType leaveType;
 

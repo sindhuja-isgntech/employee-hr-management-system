@@ -22,15 +22,15 @@ public class LeaveService {
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
 
-    public LeaveResponseDTO applyLeave(LeaveRequestDTO dto) {
+    public LeaveResponseDTO applyLeaveForUser(String email, LeaveRequestDTO dto) {
         if (dto.getEndDate().isBefore(dto.getStartDate())) {
             throw new InvalidOperationException("End date cannot be before start date");
         }
 
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + dto.getEmployeeId()));
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No employee profile is linked to this account."));
 
-        if (leaveRepository.hasOverlappingLeave(dto.getEmployeeId(), dto.getStartDate(), dto.getEndDate())) {
+        if (leaveRepository.hasOverlappingLeave(employee.getId(), dto.getStartDate(), dto.getEndDate())) {
             throw new InvalidOperationException("Employee already has an overlapping active/pending leave request for this period.");
         }
 
@@ -50,6 +50,13 @@ public class LeaveService {
         return leaveRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<LeaveResponseDTO> getMyLeavesForUser(String email) {
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No employee profile is linked to this account."));
+        return getMyLeaves(employee.getId());
     }
 
     public List<LeaveResponseDTO> getAllLeaves() {
@@ -73,7 +80,7 @@ public class LeaveService {
         }
 
         String currentAdminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User admin = userRepository.findByEmail(currentAdminEmail).orElse(null);
+        User admin = userRepository.findByEmailIgnoreCase(currentAdminEmail).orElse(null);
 
         leave.setStatus(LeaveStatus.APPROVED);
         leave.setApprovedBy(admin);

@@ -3,11 +3,13 @@ package com.hrms.employee.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hrms.employee.dto.EmployeeRequestDTO;
 import com.hrms.employee.dto.EmployeeResponseDTO;
@@ -63,10 +65,12 @@ public class EmployeeService {
         return result;
     }
 
+    @Transactional(readOnly = true)
     public Page<EmployeeResponseDTO> getEmployees(String search, Long departmentId, Status status, int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Employee> employeePage = employeeRepository.searchAndFilterEmployees(search, departmentId, status, pageable);
+        String searchTerm = search == null ? "" : search.trim();
+        Page<Employee> employeePage = employeeRepository.searchAndFilterEmployees(searchTerm, departmentId, status, pageable);
         return employeePage.map(this::mapToDTO);
     }
 
@@ -76,15 +80,32 @@ public class EmployeeService {
         return mapToDTO(employee);
     }
 
+    @Transactional(readOnly = true)
+    public EmployeeResponseDTO getEmployeeForUser(String email) {
+        Employee employee = employeeRepository.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No employee profile is linked to this account."));
+        return mapToDTO(employee);
+    }
+
     public EmployeeResponseDTO updateEmployee(Long id, EmployeeRequestDTO dto) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + id));
 
+        if (!employee.getEmail().equalsIgnoreCase(dto.getEmail()) && employeeRepository.existsByEmail(dto.getEmail())) {
+            throw new DuplicateResourceException("Employee with email " + dto.getEmail() + " already exists");
+        }
+        if (!employee.getEmployeeCode().equalsIgnoreCase(dto.getEmployeeCode())
+                && employeeRepository.existsByEmployeeCode(dto.getEmployeeCode())) {
+            throw new DuplicateResourceException("Employee code " + dto.getEmployeeCode() + " already exists");
+        }
+
         Department department = departmentRepository.findById(dto.getDepartmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with ID: " + dto.getDepartmentId()));
 
+        employee.setEmployeeCode(dto.getEmployeeCode());
         employee.setFirstName(dto.getFirstName());
         employee.setLastName(dto.getLastName());
+        employee.setEmail(dto.getEmail());
         employee.setPhone(dto.getPhone());
         employee.setDesignation(dto.getDesignation());
         employee.setDateOfJoining(dto.getDateOfJoining());

@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,14 +26,22 @@ public class LeaveController {
     // Employee APIs
     @PostMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<LeaveResponseDTO> applyLeave(@Valid @RequestBody LeaveRequestDTO dto) {
-        return new ResponseEntity<>(leaveService.applyLeave(dto), HttpStatus.CREATED);
+    public ResponseEntity<LeaveResponseDTO> applyLeave(
+            @Valid @RequestBody LeaveRequestDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return new ResponseEntity<>(leaveService.applyLeaveForUser(userDetails.getUsername(), dto), HttpStatus.CREATED);
     }
 
     @GetMapping("/my/{employeeId}")
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<List<LeaveResponseDTO>> getMyLeaves(@PathVariable Long employeeId) {
         return ResponseEntity.ok(leaveService.getMyLeaves(employeeId));
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<List<LeaveResponseDTO>> getMyLeaves(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(leaveService.getMyLeavesForUser(userDetails.getUsername()));
     }
 
     @GetMapping("/{id}")

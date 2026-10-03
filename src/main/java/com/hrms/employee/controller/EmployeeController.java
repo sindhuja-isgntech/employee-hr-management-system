@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.hrms.employee.dto.EmployeeRequestDTO;
 import com.hrms.employee.dto.EmployeeResponseDTO;
@@ -49,6 +52,13 @@ public class EmployeeController {
 			@RequestParam(defaultValue = "id") String sortBy,
 			@RequestParam(defaultValue = "asc") String sortDir) {
 		return ResponseEntity.ok(employeeService.getEmployees(search, departmentId, status, page, size, sortBy, sortDir));
+	}
+
+	@GetMapping("/me")
+	@PreAuthorize("hasRole('EMPLOYEE')")
+	public ResponseEntity<EmployeeResponseDTO> getMyEmployeeProfile(
+			@AuthenticationPrincipal UserDetails userDetails) {
+		return ResponseEntity.ok(employeeService.getEmployeeForUser(userDetails.getUsername()));
 	}
 
 	@GetMapping("/{id}")
